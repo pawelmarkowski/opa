@@ -803,7 +803,10 @@ func insertErrorIntoHTTPSendCache(bctx BuiltinContext, key ast.Object, err error
 func (c *interQueryCache) checkHTTPSendInterQueryCache() (ast.Value, error) {
 	requestCache := c.bctx.InterQueryBuiltinCache
 
+	fmt.Printf("c.key %v", c.key)
+
 	cachedValue, found := requestCache.Get(c.key)
+	fmt.Printf("cached value found: %v", found)
 	if !found {
 		return nil, nil
 	}
@@ -819,16 +822,21 @@ func (c *interQueryCache) checkHTTPSendInterQueryCache() (ast.Value, error) {
 	switch v := value.(type) {
 	case *interQueryCacheValue:
 		var err error
+
+		fmt.Print("switch: interQueryCacheValue")
 		cachedRespData, err = v.copyCacheData()
 		if err != nil {
 			return nil, err
 		}
 	case *interQueryCacheData:
+		fmt.Print("switch: interQueryCacheData")
 		cachedRespData = v
 	default:
+		fmt.Print("switch: default")
 		return nil, nil
 	}
 
+	fmt.Printf("cache expired? current: %s  expired: %s is expired: %v", getCurrentTime(c.bctx), cachedRespData.ExpiresAt, getCurrentTime(c.bctx).Before(cachedRespData.ExpiresAt))
 	if getCurrentTime(c.bctx).Before(cachedRespData.ExpiresAt) {
 		return cachedRespData.formatToAST(c.forceJSONDecode, c.forceYAMLDecode)
 	}
